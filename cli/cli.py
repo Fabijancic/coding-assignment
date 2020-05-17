@@ -1,7 +1,7 @@
 import argparse
-from datetime import datetime
 
 from data_processor.data_processor import Data_processor
+from utils.date_utils import parse_datetime 
 
 class Cli_parser:
     def __init__(self):
@@ -27,16 +27,6 @@ class Cli_parser:
         if self.process_kwargs():
             self.invoke_data_processor()
 
-    def parse_datetime(self, date_string):
-        """ Get the expected time string into datetime object.
-        """
-        # Unpact date, and time if it exists
-        (date, *time) = date_string.split(' ')
-        if time:
-            return datetime.strptime(date_string, '%m/%d/%y %H:%M')
-        else:
-            return datetime.strptime(date_string, '%m/%d/%y')
-
     def process_kwargs(self):
         """ Get data from kwargs into the class.
             If a kwarg is None, show help.
@@ -51,16 +41,23 @@ class Cli_parser:
             if item[0] == 'kpi_list':
                 self.kpi_list = item[1].split(',')
             if item[0] == 'start':
-                self.start = self.parse_datetime(item[1])
+                self.start = parse_datetime(item[1])
             if item[0] == 'stop':
-                self.stop = self.parse_datetime(item[1])
+                self.stop = parse_datetime(item[1])
         return True
 
     def invoke_data_processor(self):
         processor = Data_processor(self.kpi_list,
                                    self.start,
                                    self.stop)
-        print(processor.run())
+        processed_dict = processor.run()
+        self.pretty_print(processed_dict)
+
+    def pretty_print(self, processed_dict):
+        for kpi, kpi_dict in processed_dict.items():
+            print("\n{}:".format(kpi))
+            for key, val in kpi_dict.items():
+                print("        {:14} : {}".format(key, val))
 
 
 if __name__ == '__main__':
